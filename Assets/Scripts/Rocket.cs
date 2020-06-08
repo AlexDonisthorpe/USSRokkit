@@ -34,12 +34,10 @@ public class Rocket : MonoBehaviour
         if (Input.GetKey(KeyCode.LeftArrow))
         {
             transform.Rotate(Vector3.forward * rotationThisFrame);
-            Debug.Log("Rotating Left");
         }
         else if (Input.GetKey(KeyCode.RightArrow))
         {
             transform.Rotate(Vector3.back * rotationThisFrame);
-            Debug.Log("Rotating Right");
         }
 
         rigidBody.freezeRotation = false; // Resume physics control
@@ -55,11 +53,24 @@ public class Rocket : MonoBehaviour
             {
                 audioSource.Play();
             }
-            Debug.Log("Booster Active");
         }
         else
         {
             audioSource.Stop();
         }
     }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        switch (collision.gameObject.tag)
+        {
+            case "Friendly":
+                Debug.Log("OK");
+                break;
+            default:
+                Debug.Log("Dead");
+                break;
+        }
+    }
 }
+
