@@ -9,8 +9,15 @@ public class Rocket : MonoBehaviour
     //Variables
     [SerializeField] float rcsThrust = 100f;
     [SerializeField] float mainThrust = 300f;
-    [SerializeField] AudioClip mainEngine;
-    
+
+    [SerializeField] AudioClip engineSFX;
+    [SerializeField] AudioClip collisionSFX;
+    [SerializeField] AudioClip levelClearSFX;
+
+    [SerializeField] ParticleSystem engineVFX;
+    [SerializeField] ParticleSystem collisionVFX;
+    [SerializeField] ParticleSystem levelClearVFX;
+
     enum State { Alive, Dying, Transcending };
     State state = State.Alive;
 
@@ -60,6 +67,7 @@ public class Rocket : MonoBehaviour
         else
         {
             audioSource.Stop();
+            engineVFX.Stop();
         }
     }
 
@@ -69,8 +77,9 @@ public class Rocket : MonoBehaviour
         rigidBody.AddRelativeForce(Vector3.up * thrustThisFrame);
         if (!audioSource.isPlaying)
         {
-            audioSource.PlayOneShot(mainEngine);
+            audioSource.PlayOneShot(engineSFX);
         }
+        engineVFX.Play();
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -83,20 +92,32 @@ public class Rocket : MonoBehaviour
         switch (collision.gameObject.tag)
         {
             case "Friendly":
-                Debug.Log("OK");
                 break;
             case "Finish":
-                Debug.Log("You win!");
-                state = State.Transcending;
-                Invoke("LoadNextScene", 1f); // parameterise time
+                StartSuccessSequence();
                 break;
             default:
-                state = State.Transcending;
-                Invoke("LoadPreviousScene", 1f);
-                audioSource.Stop();
-                Debug.Log("Dead");
+                StartDeathSequence();
                 break;
         }
+    }
+
+    private void StartSuccessSequence()
+    {
+        state = State.Transcending;
+        audioSource.PlayOneShot(levelClearSFX);
+        levelClearVFX.Play();
+        Invoke("LoadNextScene", 1f); // parameterise time
+    }
+
+    private void StartDeathSequence()
+    {
+        state = State.Dying;
+        audioSource.Stop();
+        engineVFX.Stop();
+        collisionVFX.Play();
+        audioSource.PlayOneShot(collisionSFX);
+        Invoke("LoadPreviousScene", 1f);
     }
 
     private void LoadPreviousScene()
