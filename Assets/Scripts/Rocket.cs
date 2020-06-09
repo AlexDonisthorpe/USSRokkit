@@ -7,6 +7,8 @@ using UnityEngine.SceneManagement;
 public class Rocket : MonoBehaviour
 {
     //Variables
+    [SerializeField]  float levelLoadDelay = 2f;
+
     [SerializeField] float rcsThrust = 100f;
     [SerializeField] float mainThrust = 300f;
 
@@ -107,7 +109,7 @@ public class Rocket : MonoBehaviour
         state = State.Transcending;
         audioSource.PlayOneShot(levelClearSFX);
         levelClearVFX.Play();
-        Invoke("LoadNextScene", 1f); // parameterise time
+        Invoke("LoadNextScene", levelLoadDelay); // parameterise time
     }
 
     private void StartDeathSequence()
@@ -117,7 +119,7 @@ public class Rocket : MonoBehaviour
         engineVFX.Stop();
         collisionVFX.Play();
         audioSource.PlayOneShot(collisionSFX);
-        Invoke("LoadPreviousScene", 1f);
+        Invoke("LoadPreviousScene", levelLoadDelay);
     }
 
     private void LoadPreviousScene()
