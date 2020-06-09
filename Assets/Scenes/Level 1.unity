@@ -800,6 +800,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: USSRokkit
       objectReference: {fileID: 0}
+    - target: {fileID: 6336632449058500509, guid: b5a3c097f19fb3e41b608db3a75c8674,
+        type: 3}
+      propertyPath: m_audioClip
+      value: 
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b5a3c097f19fb3e41b608db3a75c8674, type: 3}
 --- !u!1 &1097831066
