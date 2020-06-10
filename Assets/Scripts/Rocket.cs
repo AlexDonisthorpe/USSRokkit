@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 public class Rocket : MonoBehaviour
 {
     //Variables
-    [SerializeField]  float levelLoadDelay = 2f;
+    [SerializeField] float levelLoadDelay = 2f;
 
     [SerializeField] float rcsThrust = 100f;
     [SerializeField] float mainThrust = 300f;
@@ -20,10 +20,10 @@ public class Rocket : MonoBehaviour
     [SerializeField] ParticleSystem collisionVFX;
     [SerializeField] ParticleSystem levelClearVFX;
 
-    enum State { Alive, Dying, Transcending };
-    State state = State.Alive;
+    bool isTransitioning = false;
+    int currentSceneIndex;
 
-    bool collissionsAreEnabled = true;
+    bool collisionsDisabled = false;
 
     // References
     Rigidbody rigidBody;
@@ -33,41 +33,35 @@ public class Rocket : MonoBehaviour
     {
         rigidBody = GetComponent<Rigidbody>();
         audioSource = GetComponent<AudioSource>();
+        currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (state == State.Alive)
+        if (!isTransitioning)
         {
             RespondToThrustInput();
             Rotate();
         }
+        if (Debug.isDebugBuild) { 
         RespondToDebugKeys();
+        }
     }
 
     private void RespondToDebugKeys()
     {
         if (Input.GetKey(KeyCode.L))
         {
-            int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
-            Debug.Log(currentSceneIndex);
-            if (currentSceneIndex == 6)
-            {
-                SceneManager.LoadScene(0);
-            }
-            else
-            {
-                SceneManager.LoadScene(currentSceneIndex+1);
-            }
+           LoadNextScene();
         } else if (Input.GetKey(KeyCode.C)){
-            collissionsAreEnabled = !collissionsAreEnabled;
+            collisionsDisabled = !collisionsDisabled;
         }
     }
 
     private void Rotate()
     {
-        rigidBody.freezeRotation = true; // take manual control of rotation
+        rigidBody.angularVelocity = Vector3.zero; // remove rotation due to physics
         float rotationThisFrame = rcsThrust * Time.deltaTime;
 
         if (Input.GetKey(KeyCode.LeftArrow))
@@ -79,7 +73,6 @@ public class Rocket : MonoBehaviour
             transform.Rotate(Vector3.back * rotationThisFrame);
         }
 
-        rigidBody.freezeRotation = false; // Resume physics control
     }
 
     private void RespondToThrustInput()
@@ -90,9 +83,14 @@ public class Rocket : MonoBehaviour
         }
         else
         {
-            audioSource.Stop();
-            engineVFX.Stop();
+            StopApplyingThrust();
         }
+    }
+
+    private void StopApplyingThrust()
+    {
+        audioSource.Stop();
+        engineVFX.Stop();
     }
 
     private void ApplyThrust()
@@ -108,7 +106,7 @@ public class Rocket : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if(state != State.Alive || !collissionsAreEnabled)
+        if(isTransitioning || collisionsDisabled)
         {
             return;
         }
@@ -128,7 +126,7 @@ public class Rocket : MonoBehaviour
 
     private void StartSuccessSequence()
     {
-        state = State.Transcending;
+        isTransitioning = true;
         audioSource.PlayOneShot(levelClearSFX);
         levelClearVFX.Play();
         Invoke("LoadNextScene", levelLoadDelay); // parameterise time
@@ -136,22 +134,34 @@ public class Rocket : MonoBehaviour
 
     private void StartDeathSequence()
     {
-        state = State.Dying;
+        isTransitioning = true;
         audioSource.Stop();
         engineVFX.Stop();
         collisionVFX.Play();
         audioSource.PlayOneShot(collisionSFX);
-        Invoke("LoadPreviousScene", levelLoadDelay);
+        Invoke("LoadCurrentScene", levelLoadDelay);
     }
 
-    private void LoadPreviousScene()
+    private void LoadFirstScene()
     {
         SceneManager.LoadScene(0);
     }
 
     private void LoadNextScene()
     {
-        SceneManager.LoadScene(1); // allow for more than two levels
+        if (currentSceneIndex == SceneManager.sceneCountInBuildSettings-1)
+        {
+            LoadFirstScene();
+        }
+        else
+        {
+            SceneManager.LoadScene(currentSceneIndex + 1);
+        }
+    }
+
+    private void LoadCurrentScene()
+    {
+        SceneManager.LoadScene(currentSceneIndex);
     }
 }
 
